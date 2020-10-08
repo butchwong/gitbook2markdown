@@ -1,5 +1,4 @@
 import requests
-from selenium import webdriver
 import html2text
 from lxml import etree
 import re
@@ -8,27 +7,21 @@ import os
 import json
 from urllib.parse import urljoin
 
-class Gitbook2Markdown(object):
+class Gitbook2Md(object):
     def __init__(self, path, dir_name):
         self.path = path
         self.index = path if path.endswith('/index.html') else path + '/index.html'
-        # self.driver = webdriver.Chrome()
         self.dir_name = dir_name
-
-        self.driver = webdriver.PhantomJS()
         self.h = html2text.HTML2Text()
 
-        self.driver.get(self.index)
-        index_html_str = self.driver.page_source
+        index_html_str = requests.get(self.index).content.decode()
         index_html = etree.HTML(index_html_str)
         self.pre_li = index_html.xpath('//nav/ul[@class="summary"]/li[contains(@class, "chapter")]')
 
         self.p_dot = re.compile(r'(\.)?$')
         self.p_s = re.compile(r'\s+')
 
-
     def __del__(self):
-        self.driver.quit()
         self.h.close()
 
     # 传入每个导航li标签，fileMapUrl_list 中存放目标md文件路径，url
@@ -115,5 +108,5 @@ if __name__ == "__main__":
         os.mkdir(dir_name)
         print('目标目录不存在，自动创建目录：', dir_name)
 
-    md = Gitbook2Markdown(index_url, dir_name)
+    md = Gitbook2Md(index_url, dir_name)
     md.run()
